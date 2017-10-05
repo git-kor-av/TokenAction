@@ -90,6 +90,10 @@ var tokenAction = tokenAction || (function() {
             return;
         }
         
+        if (repeatingAttrs[0].get('name').match('repeating_spell-npc')) {
+            return;
+        }
+        
         _.each(repeatingAttrs, function(s){
             var level = s.get('name').split('_')[1].replace('spell-', ''),
                 apiButton = "[" + s.get('current') + "](~repeating_spell-" + level + "_" + s.get('name').split('_')[2] + "_spell)";
@@ -140,7 +144,29 @@ var tokenAction = tokenAction || (function() {
             createObj("ability", {name: 'Spells', action: "/w @{character_name} &{template:atk} {{desc=" + spellText + "}}", characterid: id, istokenaction: true});
         }
     },
-
+    
+    sortRepeating = function(name, pattern, id) {
+        var repeatingAttrs = filterObjs(function(o){
+            return o.get('type')==='attribute' && o.get('characterid') === id && o.get('name').match(name);
+        }),
+            sorted = _.sortBy(repeatingAttrs, (o)=> o.get('current'));
+        
+        _.each(sorted,function(attr){
+            var repeatingId = attr.get('name').split('_')[2],
+                repeatingName = "a-"+attr.get('current'),
+                repeatingAction = "%{" + id + "|" + (pattern.replace(/%%RID%%/g,repeatingId)) + "}";
+                if (pattern.match('npcaction-l')){
+                    repeatingName = "al-"+attr.get('current');
+                }
+                var checkAbility = findObjs({_type: 'ability', _characterid: id, name: repeatingName});
+                if (checkAbility[0]) {
+                    checkAbility[0].set({action: repeatingAction});
+                } else {
+                    createObj("ability", {name: repeatingName, action: repeatingAction, characterid: id, istokenaction: true});
+                }
+        });
+    },
+    
     handleInput = function(msg) {
         var char;
         
@@ -168,6 +194,18 @@ var tokenAction = tokenAction || (function() {
 		    _.each(char, function(d) {
 		        deleteAbilities(d.id);
 		        sendChat("TokenAction", "/w " + msg.who + " Deleted Token Actions for " + d.get('name') + ".");
+		    });
+		} else if (msg.type === 'api' && msg.content.search(/^!sortta\b/) !== -1 && msg.selected) {
+		    char = _.uniq(getSelectedCharacters(msg.selected));
+		    
+		    _.each(char, function(a) {
+		        if (isNpc(a.id) === "1") {
+		            createAbility('Init', "%{" + a.id + "|npc_init}", a.id);
+		            sortRepeating(/repeating_npcaction_[^_]+_name\b/, 'repeating_npcaction_%%RID%%_npc_action', a.id);
+		            sortRepeating(/repeating_npcaction-l_[^_]+_name\b/, 'repeating_npcaction-l_%%RID%%_npc_action', a.id);
+		            createSpell(a.id);
+		        }
+		        sendChat("TokenAction", "/w " + msg.who + " Created Token Actions for " + a.get('name') + ".");
 		    });
 		}
 		return;
