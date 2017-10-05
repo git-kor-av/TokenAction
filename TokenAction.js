@@ -1,7 +1,7 @@
 var tokenAction = tokenAction || (function() {
     'use strict';
 
-    var version = '0.2.2',
+    var version = '0.2.3',
         sheetVersion = '5th Edition OGL by Roll20 2.0',
         
     checkInstall = function() {
