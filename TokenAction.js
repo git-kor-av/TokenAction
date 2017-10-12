@@ -1,7 +1,7 @@
 var tokenAction = tokenAction || (function() {
     'use strict';
 
-    var version = '0.2.4',
+    var version = '0.2.5',
         sheetVersion = '5th Edition OGL by Roll20 2.0',
         
     checkInstall = function() {
@@ -69,7 +69,7 @@ var tokenAction = tokenAction || (function() {
     createSpell = function(id) {
         var checkAbility = findObjs({_type: 'ability', _characterid: id, name: 'Spells'}),
             repeatingAttrs = filterObjs(function(o){
-                return o.get('type') === 'attribute' && o.get('characterid') === id && o.get('name').match(/repeating_spell-\S+_[^_]+_spellname\b/);
+                return o.get('type') === 'attribute' && o.get('characterid') === id && o.get('name').match(/repeating_spell-[^{(np)][\S+_[^_]+_spellname\b/);
             }),
             spellText = "",
             sk = [],
@@ -85,12 +85,8 @@ var tokenAction = tokenAction || (function() {
                 '8th': [],
                 '9th': []
             };
-        
+	
         if (!repeatingAttrs[0]) {
-            return;
-        }
-        
-        if (repeatingAttrs[0].get('name').match('repeating_spell-npc')) {
             return;
         }
         
